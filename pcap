@@ -1,0 +1,38 @@
+---
+- name: Collect and extract PCAP from Control Node
+  hosts: controlnodes
+  gather_facts: no
+  tasks:
+
+    # this directory will hold the PCAP file
+    - name: Creating a directory
+      file:
+        path: /home/Desktop/pcaps/
+        state: directory
+
+    - name: Creating folder
+      file:
+        path: /home/andaya/Documents/HOA8/pcaps/
+        state: directory
+
+    - name: Creating pcap file
+      shell: |
+        touch /home/managednode/pcaps/network.pcap
+        chmod o=rw /home/managednode/pcaps/network.pcap 
+ 
+    - name: Capturing traffic 
+      shell: 
+        tshark -i enp0s8 -d tcp.port==8888,http -T text -w /home/managednode/Desktop/pcaps/network.pcap >> network.txt
+      async: 45
+      poll: 0
+      ignore_errors: true
+
+    - name: Extracting pcap executable file
+      fetch:
+        src: /home/managednode/Desktop/pcaps/network.pcap
+        dest: /home/andaya/Desktop/HOA8/pcaps/
+
+    - name: Extracting pcap executable file
+      fetch:
+        src: /home/managednode/Desktop/pcaps/network.txt
+        dest: /home/andaya/Desktop/HOA8/pcaps/
