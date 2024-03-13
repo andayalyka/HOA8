@@ -1,38 +1,29 @@
 ---
 - name: Collect and extract PCAP from Control Node
-  hosts: controlnodes
-  gather_facts: no
+  hosts: all
+  gather_facts: true
+  become: yes
+  become_user: root
+
   tasks:
-
-    # this directory will hold the PCAP file
-    - name: Creating a directory
-      file:
-        path: /home/Desktop/pcaps/
-        state: directory
-
-    - name: Creating folder
-      file:
-        path: /home/andaya/Documents/HOA8/pcaps/
-        state: directory
-
-    - name: Creating pcap file
-      shell: |
-        touch /home/managednode/pcaps/network.pcap
-        chmod o=rw /home/managednode/pcaps/network.pcap 
- 
-    - name: Capturing traffic 
-      shell: 
-        tshark -i enp0s8 -d tcp.port==8888,http -T text -w /home/managednode/Desktop/pcaps/network.pcap >> network.txt
-      async: 45
-      poll: 0
-      ignore_errors: true
-
-    - name: Extracting pcap executable file
+    - name: Collect PCAP file from server
       fetch:
-        src: /home/managednode/Desktop/pcaps/network.pcap
-        dest: /home/andaya/Desktop/HOA8/pcaps/
+        src: /home/lykaandaya/Documents/HOA8/pcap.pcap
+        dest: /home/lykaandaya/Documents/HOA8/
+        flat: yes
 
-    - name: Extracting pcap executable file
-      fetch:
-        src: /home/managednode/Desktop/pcaps/network.txt
-        dest: /home/andaya/Desktop/HOA8/pcaps/
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Extract executable from PCAP file
+      command: "tcpflow -r /home/lykaandaya/Documents/HOA8/pcap.pcap -o /home/lykaandaya/Documents/HOA8/"
+      args:
+        creates: /home/lykaandaya/Documents/HOA8/executable.exe
+    - name: Debug .exe file
+      command: "cat /home/lykaandaya/Documents/HOA8/report.xml"
+      register: cat_output
+      changed_when: false
+
+    - debug:
+        var: cat_output.stdout_lines
